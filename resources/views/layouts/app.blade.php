@@ -34,8 +34,12 @@
 
 <body>
     <div class="app">
-        @livewire('navbar')
+        {{--  @livewire('navbar')  --}}
         @yield('content')
+        {{--  @yield('content-admin')  --}}
+        {{--  @component('layouts.Admin.master')
+
+        @endcomponent  --}}
     </div>
 </body>
 

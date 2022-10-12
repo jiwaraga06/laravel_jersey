@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\payment\TripayController;
 use App\Http\Livewire\ProductDetail;
 use App\Models\HistoryPesanan;
 use App\Models\Liga;
@@ -16,6 +17,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Profiler\Profile;
+
+use function PHPUnit\Framework\isEmpty;
 
 class ApiController extends Controller
 {
@@ -75,9 +79,7 @@ class ApiController extends Controller
                 'alert' => $auth
             ], 401);
         }
-
         $user = User::where('email', $request->email)->first();
-
         $token = $user->createToken('token-auth')->plainTextToken;
         return response()->json([
             'message' => 'Berhasil Login',
@@ -91,10 +93,12 @@ class ApiController extends Controller
         $user->currentAccessToken()->delete();
         $token = $user->currentAccessToken();
         if (empty($token)) {
-            return response()->json([
-                'message' => 'Logout failed',
-                'access' => $token
-            ],);
+            return response()->json(
+                [
+                    'message' => 'Logout failed',
+                    'access' => $token
+                ]
+            );
         } else {
             return response()->json([
                 'status' => 'success',
@@ -106,9 +110,52 @@ class ApiController extends Controller
     public function getProfile($id)
     {
         $profile = User::where('id', $id)->first();
+        if ($profile == null) {
+            return response()->json([
+                'message' => 'Profile tidak ditemukan'
+            ]);
+        }
         return response()->json([
             'profile' => $profile
         ]);
+    }
+    public function updateProfile(Request $request)
+    {
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'alamat' => 'required',
+                'nohp' => 'required',
+            ]
+        );
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Gagal Mengubah data Profile',
+                'error' => $validator->errors()
+            ], 400);
+        }
+        $user = User::where('id', $request->id)->first();
+        if (!empty($user)) {
+            $image = $request->file('poto');
+            //masukan ke dalma folder storage
+            // $image->storeAs('postImg', $image->hashName());
+            $image->move(public_path('assets/jersey'), $image->hashName());
+            $user->name = $request->name;
+            $user->alamat = $request->alamat;
+            $user->nohp = $request->nohp;
+            $user->poto = $image->hashName();
+            $user->update();
+            return response()->json([
+                'message' => 'Berhasil Update Profile',
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Profile tidak ditemukan',
+            ],404);
+        }
+        // return response()->json([
+        //     'message' => $user,
+        // ]);
     }
     public function bestProduct()
     {
@@ -197,7 +244,7 @@ class ApiController extends Controller
                 Wishlist::where('product_id', $product->id)->delete();
                 return response()->json([
                     'message' => 'Berhasil hapus dari Wihslist'
-                ]);
+                ], 200);
                 // return response()->json([
                 //     'message' => 'Product ini sudah ada di Wishlist'
                 // ]);
@@ -228,7 +275,7 @@ class ApiController extends Controller
                 ]);
                 return response()->json([
                     'message' => 'Berhasil menambahkan favorite'
-                ]);
+                ], 200);
             }
         }
     }
@@ -251,7 +298,7 @@ class ApiController extends Controller
         $product = Product::find($request->id_product);
         if (empty($product)) {
             return response()->json([
-                'message' => 'Product tidak terdaftar di database'
+                'message' => 'Product ini tidak terdaftar'
             ]);
         } else {
             Product::where('id', $product->id)->update([
@@ -267,7 +314,7 @@ class ApiController extends Controller
             ]);
             Wishlist::where('product_id', $product->id)->delete();
             return response()->json([
-                'message' => 'Berhasil hapus dari Wihslist'
+                'message' => 'Berhasil hapus dari Favorite'
             ]);
         }
     }
@@ -278,9 +325,9 @@ class ApiController extends Controller
             'wishlist' => $wihslist
         ]);
     }
-    public function searchWishlist($nama_product)
+    public function searchWishlist($user_id, $nama_product)
     {
-        $wihslist = Wishlist::where('nama', 'like', '%' . $nama_product . '%')->get();
+        $wihslist = Wishlist::where('user_id', $user_id)->where('nama', 'like', '%' . $nama_product . '%')->get();
         return response()->json([
             'wishlist' => $wihslist
         ]);
@@ -309,15 +356,15 @@ class ApiController extends Controller
 
         $products = Product::find($request->product_id);
         if ($products) {
-            if (!empty($request->nama)) {
-                $total_harga = $request->jumlah_pesanan * ($products->harga + $products->harga_nameset);
-            } else {
+            if (empty($request->nama)) {
                 $total_harga = $request->jumlah_pesanan * $products->harga;
+            } else {
+                $total_harga = $request->jumlah_pesanan * ($products->harga + $products->harga_nameset);
             }
         } else {
             return response()->json([
                 'message' => 'Product tidak terdaftar di database'
-            ]);
+            ], 400);
         }
 
         //mengecek pesanan
@@ -343,10 +390,10 @@ class ApiController extends Controller
             'pesanan_id' => $pesanan->id,
             'gambar' => $products->gambar,
             'jumlah_pesanan' => $request->jumlah_pesanan,
-            'nameset' => $request->nameset ? $request->nameset : false,
-            'nama' => $request->nama ? $request->nama : false,
+            'nameset' => empty($request->nameset) ? $request->nameset : false,
+            'nama' => empty($request->nama) ? $request->nama : false,
             'nama_product' => $products->nama,
-            'nomor' => $request->nomor ? $request->nomor : false,
+            'nomor' => empty($request->nomor) ? $request->nomor : false,
             'total_harga' => $total_harga
         ]);
 
@@ -357,15 +404,22 @@ class ApiController extends Controller
     public function getPesananDetail(Request $request)
     {
         $pesanan = Pesanan::where('user_id', $request->user_id)->where('status', 0)->first();
-        $pesanan_detail = PesananDetails::where('pesanan_id', $pesanan->id)->get();
-        return response()->json([
-            'message' => 'Pesanan detail',
-            'data' => $pesanan_detail
-        ]);
+        if ($pesanan) {
+            $pesanan_detail = PesananDetails::where('pesanan_id', $pesanan->id)->get();
+            return response()->json([
+                'message' => 'Pesanan detail',
+                'data' => $pesanan_detail
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Belum ada pesanan',
+                'data' => []
+            ]);
+        }
     }
     public function getTotalHarga(Request $request)
     {
-        $pesanan = Pesanan::where('user_id', $request->user_id)->where('status', 0)->first();
+        $pesanan = Pesanan::where('user_id', $request->user_id)->where('status', 0)->get();
         return response()->json([
             'message' => 'Total Harga',
             'data' => $pesanan
@@ -447,12 +501,12 @@ class ApiController extends Controller
             $pesanan->total_harga = $pesanan_details;
             $pesanan->update();
             return response()->json([
-                'status' => true,
+                'status' => 'Berhasil Hapus Pesanan',
                 'message' => 'Sukses hapus Pesanan !',
             ]);
         } else {
             return response()->json([
-                'status' => false,
+                'status' => 'Gagal Hapus Pesanan',
                 'message' => 'Pesanan tidak ditemukan',
             ]);
         }
@@ -494,5 +548,24 @@ class ApiController extends Controller
                 'message' => 'Pesanan tidak ditemukan',
             ]);
         }
+    }
+
+    public function getPaymentChannels()
+    {
+        $tripay = new TripayController();
+        $tripay->getPaymentChannels();
+        return response()->json([
+            'tripay' => $tripay
+        ]);
+    }
+    public function requestTranscation(Request $request)
+    {
+        $tripay = new TripayController();
+        $tripay->requestTranscation($request->method, $request->total, $request->order_item);
+        return response()->json([
+            'tripay' => $tripay,
+            // 'method' => $request->method,
+            // 'total' => $request->total,
+        ]);
     }
 }

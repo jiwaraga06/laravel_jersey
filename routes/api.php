@@ -25,6 +25,7 @@ Route::group(['prefix' => 'auth', 'middleware' => 'auth:sanctum'], function () {
 Route::post('/register', [ApiController::class, 'register']);
 Route::post('/login', [ApiController::class, 'login']);
 Route::get('/getProfile/{id}', [ApiController::class, 'getProfile']);
+Route::post('/updateProfile', [ApiController::class, 'updateProfile']);
 Route::get('/getProduct', [ApiController::class, 'getProduct']);
 Route::get('/bestProduct', [ApiController::class, 'bestProduct']);
 Route::get('/getProductByLiga/{liga_id}', [ApiController::class, 'getProductByLiga']);
@@ -41,5 +42,7 @@ Route::post('/deletePesananDetailById', [ApiController::class, 'deletePesananDet
 Route::post('/addWishlist', [ApiController::class, 'addWishlist']);
 Route::post('/removeWihslist', [ApiController::class, 'removeWihslist']);
 Route::get('/getWishlist/{user_id}', [ApiController::class, 'getWishlist']);
-Route::get('/searchWishlist/{nama_product}', [ApiController::class, 'searchWishlist']);
+Route::get('/searchWishlist/{user_id}/{nama_product}', [ApiController::class, 'searchWishlist']);
 Route::post('/addHistory', [ApiController::class, 'addHistory']);
+Route::get('/getPaymentChannels', [ApiController::class,'getPaymentChannels']);
+Route::post('/requestTranscation', [ApiController::class,'requestTranscation']);
