@@ -32,4 +32,4 @@
 <!-- AdminLTE for demo purposes -->
 <script src="{{ asset('AdminLTE-3.2.0') }}/dist/js/demo.js"></script>
 <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-<script src="{{ asset('AdminLTE-3.2.0') }}/dist/js/pages/dashboard.js"></script>
+{{--  <script src="{{ asset('AdminLTE-3.2.0') }}/dist/js/pages/dashboard.js"></script>  --}}

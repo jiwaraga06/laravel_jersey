@@ -44,4 +44,8 @@ class ControllerAdmin extends Controller
             'liga' => $liga
         ]);
     }
+    public function addLiga()
+    {
+        return view('Admin.page.products.addLiga');
+    }
 }

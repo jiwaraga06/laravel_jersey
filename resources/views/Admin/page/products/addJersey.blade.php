@@ -6,6 +6,8 @@
                 <div class="row mb-2">
                     <div class="col-sm-6">
                         <h1 class="m-0">Add Jersey</h1>
+                        <h5><a href="/product/jersey" class="badge bg-danger"><i class="fas fa-arrow-left"></i> Kembali</a>
+                        </h5>
                     </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
@@ -23,40 +25,51 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label for="nama">Nama</label>
-                        <input type="name" class="form-control" id="nama" name="nama" placeholder="Masukan Nama Product">
+                        <input type="name"
+                            class="form-control @error('nama')
+                        is-invalid
+                    @enderror"
+                            id="nama" name="nama" placeholder="Masukan Nama Product">
+                        @error('nama')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
                     </div>
                     <div class="form-group">
                         <label for="harga">Harga</label>
-                        <input type="number" class="form-control" id="harga" name="harga" placeholder="Harga Product">
+                        <input type="number" class="form-control" id="harga" name="harga"
+                            placeholder="Harga Product">
                     </div>
                     <div class="form-group">
                         <label for="harga_nameset">Harga Nameset</label>
-                        <input type="number" class="form-control" id="harga_nameset" name="harga_nameset" placeholder="Harga Product"
-                            value="50000" disabled>
+                        <input type="number" class="form-control" id="harga_nameset" name="harga_nameset"
+                            placeholder="Harga Product" value="50000" disabled>
                     </div>
                     <div class="form-group">
                         <label for="harga_nameset">Berat</label>
-                        <input type="number" class="form-control" id="berat" name="berat" placeholder="Berat" value="0.25"
-                            disabled>
+                        <input type="number" class="form-control" id="berat" name="berat" placeholder="Berat"
+                            value="0.25" disabled>
                     </div>
                     <div class="form-group">
                         <label for="harga_nameset">Status</label>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="radio" id="1">
+                            <input class="form-check-input" type="radio" name="is_ready" id="is_ready" value="1">
                             <label class="form-check-label" for="flexRadioDefault1">
-                              Ready
+                                Ready
                             </label>
-                          </div>
-                          <div class="form-check">
-                            <input class="form-check-input" type="radio" name="radio" id="0" >
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="is_ready" id="is_ready" value="0">
                             <label class="form-check-label" for="flexRadioDefault2">
-                              Not Ready
+                                Not Ready
                             </label>
-                          </div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="exampleSelectBorder">Pilih Jenis</label>
-                        <select class="custom-select form-control-border" id="exampleSelectBorder">
+                        <select class="custom-select form-control-border" id="exampleSelectBorder"
+                            name="Replica Top Quality">
                             <option value="Replica Top Quality">Replica Top Quality</option>
                         </select>
                     </div>
@@ -64,18 +77,19 @@
                         <label for="exampleSelectBorder">Pilih Liga</label>
                         <select class="custom-select form-control-border" id="liga_id" name="liga_id">
                             @foreach ($liga as $item)
-                            <option value="{{ $item->id }}">{{ $item->nama }}</option>
+                                <option value="{{ $item->id }}">{{ $item->nama }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
                         <label for="image" class="form-label">Poto Product</label>
                         <input class="form-control" type="file" id="gambar" name="gambar">
-                      </div>
+                    </div>
                 </div>
-
                 <div class="card-footer">
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <div class="d-grid gap2">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
                 </div>
             </form>
         </div>

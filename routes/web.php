@@ -31,7 +31,12 @@ Route::get('/product/jersey', [App\Http\Controllers\Admin\ControllerAdmin::class
 Route::get('/product/addJersey', [App\Http\Controllers\Admin\ControllerAdmin::class, 'addJersey']);
 Route::get('/product/{jersey}/editJersey', [App\Http\Controllers\Admin\ControllerAdmin::class, 'editJersey']);
 Route::get('/product/liga', [App\Http\Controllers\Admin\ControllerAdmin::class, 'liga']);
+Route::get('/product/addLiga', [App\Http\Controllers\Admin\ControllerAdmin::class, 'addLiga']);
+
+    // PRODUCT
 Route::post('/store', [ProductController::class, 'store']);
+Route::post('/update/{id}', [ProductController::class, 'update']);
+Route::post('/delete/{id}', [ProductController::class, 'delete']);
 
 Route::get('/product', \App\Http\Livewire\ProductIndex::class)->name('product');
 Route::get('/product/liga/{ligaid}', \App\Http\Livewire\ProductLiga::class)->name('product-liga');

@@ -6,6 +6,7 @@
                 <div class="row mb-2">
                     <div class="col-sm-6">
                         <h1 class="m-0">List Jersey</h1>
+                        <h5><a href="/product/addJersey" class="badge bg-primary"><i class="fas fa-add"></i> Add Product</a></h5>
                     </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
@@ -18,7 +19,6 @@
             </div>
         </div>
         <div class="container">
-            <a href="/product/addJersey" class="btn btn-primary">Tambah</a>
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -54,7 +54,11 @@
                             <td>{{ $item->berat }} </td>
                             <td>
                                 <a href="/product/{{ $item->id }}/editJersey" class="btn btn-warning"><i class ="fas fa-pencil"></i></a>
-                                <a class="btn btn-danger"><i class ="fas fa-trash"></i></a>
+                                <form action="/delete/{{ $item->id }}" method="POST">
+                                    @method('POST')
+                                    @csrf
+                                    <button class="btn btn-danger" onclick=" return confirm('Apakah Anda Yakin ?')"><i class ="fas fa-trash"></i></button>
+                                </form>
                             </td>
                         </tr>
                     @endforeach

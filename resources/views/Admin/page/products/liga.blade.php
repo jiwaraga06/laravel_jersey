@@ -6,6 +6,7 @@
             <div class="row mb-2">
                 <div class="col-sm-6">
                     <h1 class="m-0">List Liga</h1>
+                    <h5><a href="/product/addLiga" class="badge bg-primary"><i class="fas fa-add"></i> Add Liga</a></h5>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
