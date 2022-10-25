@@ -22,6 +22,8 @@ Route::group(['prefix' => 'auth', 'middleware' => 'auth:sanctum'], function () {
     Route::post('/logout', [ApiController::class, 'logout']);
 });
 
+Route::post('/send-email', [ApiController::class, 'sendEmail']);
+Route::post('/verifikasiEmail', [ApiController::class, 'verificationEmail']);
 Route::post('/register', [ApiController::class, 'register']);
 Route::post('/login', [ApiController::class, 'login']);
 Route::get('/getProfile/{id}', [ApiController::class, 'getProfile']);

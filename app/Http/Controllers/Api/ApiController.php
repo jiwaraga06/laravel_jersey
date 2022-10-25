@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\payment\TripayController;
 use App\Http\Livewire\ProductDetail;
+use App\Mail\VerifEmail;
 use App\Models\HistoryPesanan;
 use App\Models\Liga;
 use App\Models\Pesanan;
@@ -16,8 +17,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Profiler\Profile;
+use Illuminate\Support\Str;
 
 use function PHPUnit\Framework\isEmpty;
 
@@ -42,16 +45,49 @@ class ApiController extends Controller
                 'error' => $validated->errors()
             ], 400);
         }
+        $random = Str::random(5);
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'verifikasiToken' => $random,
         ]);
         $token = $user->createToken('auth_token')->plainTextToken;
         return response()->json([
             'message' => 'Success menambahkan Account !',
             'token' => $token
         ]);
+    }
+    public function sendEmail()
+    {
+        $body = [
+            'name' => 'Raga',
+            'body' => 'Testing'
+        ];
+        Mail::to('putraraga959@gmail.com')->send(new VerifEmail($body));
+        $random = Str::random(5);
+        $user = User::where('id', 2)->first();
+        $user->verifikasitoken = $random;
+        $user->update();
+        return response()->json([
+            'message' => "pesan",
+            'token' => $user
+        ]);
+    }
+    public function verificationEmail(Request $request)
+    {
+        $user = User::where('id', 2)->first();
+        $veriftoken = $user->verifikasitoken;
+        if ($request->confirmVerif != $veriftoken) {
+            return response()->json([
+                'message' => 'token tidak match',
+                'token' => $veriftoken
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'token match'
+            ]);
+        }
     }
     public function login(Request $request)
     {
@@ -151,7 +187,7 @@ class ApiController extends Controller
         } else {
             return response()->json([
                 'message' => 'Profile tidak ditemukan',
-            ],404);
+            ], 404);
         }
         // return response()->json([
         //     'message' => $user,
