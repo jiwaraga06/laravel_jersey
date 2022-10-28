@@ -13,6 +13,8 @@ use App\Models\PesananDetails;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Wishlist;
+use Carbon\Carbon;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +60,7 @@ class ApiController extends Controller
             'token' => $token
         ]);
     }
-    public function sendEmail()
+    public function sendEmail(Request $request)
     {
         $body = [
             'name' => 'Raga',
@@ -66,7 +68,7 @@ class ApiController extends Controller
         ];
         Mail::to('putraraga959@gmail.com')->send(new VerifEmail($body));
         $random = Str::random(5);
-        $user = User::where('id', 2)->first();
+        $user = User::where('id', $request->id)->first();
         $user->verifikasitoken = $random;
         $user->update();
         return response()->json([
@@ -76,7 +78,7 @@ class ApiController extends Controller
     }
     public function verificationEmail(Request $request)
     {
-        $user = User::where('id', 2)->first();
+        $user = User::where('id', $request->id)->first();
         $veriftoken = $user->verifikasitoken;
         if ($request->confirmVerif != $veriftoken) {
             return response()->json([
@@ -84,8 +86,11 @@ class ApiController extends Controller
                 'token' => $veriftoken
             ]);
         } else {
+            // $user->email_verified_at
+            $currentTime = Carbon::now();
             return response()->json([
-                'message' => 'token match'
+                'message' => 'token match',
+                // 'datetime' => $currentTime->toDateTimeString()
             ]);
         }
     }
@@ -108,20 +113,28 @@ class ApiController extends Controller
                 'error' => $validated->errors()
             ], 400);
         }
-        $auth = Auth::attempt($request->only('email', 'password'));
-        if (!$auth) {
-            return response()->json([
-                'message' => 'Email dan Password tidak cocok',
-                'alert' => $auth
-            ], 401);
-        }
         $user = User::where('email', $request->email)->first();
-        $token = $user->createToken('token-auth')->plainTextToken;
-        return response()->json([
-            'message' => 'Berhasil Login',
-            'access_token' => $token,
-            'User' => $user
-        ]);
+        $verifikasiToken = $user->verifikasitoken;
+        if (empty($verifikasiToken)) {
+            $auth = Auth::attempt($request->only('email', 'password'));
+            if (!$auth) {
+                return response()->json([
+                    'message' => 'Email dan Password tidak cocok',
+                    'alert' => $auth
+                ], 401);
+            }
+            // $user = User::where('email', $request->email)->first();
+            $token = $user->createToken('token-auth')->plainTextToken;
+            return response()->json([
+                'message' => 'Berhasil Login',
+                'access_token' => $token,
+                'User' => $user,
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Akun Anda belum terverifikasi !'
+            ], 400);
+        }
     }
     public function logout(Request $request)
     {
