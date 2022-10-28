@@ -83,14 +83,14 @@ class ApiController extends Controller
         if ($request->confirmVerif != $veriftoken) {
             return response()->json([
                 'message' => 'token tidak match',
-                'token' => $veriftoken
+                'token' => $veriftoken,
             ]);
         } else {
-            // $user->email_verified_at
-            $currentTime = Carbon::now();
+            $user->email_verified_at = date('Y-m-d H:i:s');
+            $user->update();
             return response()->json([
                 'message' => 'token match',
-                // 'datetime' => $currentTime->toDateTimeString()
+                'Email Verified' => date('Y-m-d H:i:s')
             ]);
         }
     }
@@ -114,8 +114,8 @@ class ApiController extends Controller
             ], 400);
         }
         $user = User::where('email', $request->email)->first();
-        $verifikasiToken = $user->verifikasitoken;
-        if (empty($verifikasiToken)) {
+        $email_verified = $user->email_verified_at;
+        if (!empty($email_verified)) {
             $auth = Auth::attempt($request->only('email', 'password'));
             if (!$auth) {
                 return response()->json([
