@@ -27,6 +27,8 @@
                         <th>Alamat</th>
                         <th>No.Hp</th>
                         <th>Poto</th>
+                        <th>Status Verifikasi Email</th>
+                        <th>Tanggal Verifikasi</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -38,6 +40,27 @@
                             <td>{{ $item->email }}</td>
                             <td>{{ $item->alamat }}</td>
                             <td>{{ $item->nohp }}</td>
+                            <td></td>
+                            <td>
+                                @if ($item->email_verified_at)
+                                    <span class="badge bg-success"><i class="fas fa-check"></i> Verified</span>
+                                @else
+                                    <span class="badge bg-danger"><i class="fas fa-xmark"></i> Not Verified</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($item->email_verified_at)
+                                    {{ $item->email_verified_at }}
+                                @endif
+                            </td>
+                            <td>
+                                <a href="" class="btn btn-warning"><i class="fas fa-pencil"></i></a>
+                                <form action="" method="">
+                                    @csrf
+                                    <button class="btn btn-danger" onclick=" return confirm('Apakah Anda Yakin ?')"><i
+                                            class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

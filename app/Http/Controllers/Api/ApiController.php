@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\payment\TripayController;
-use App\Http\Livewire\ProductDetail;
 use App\Mail\VerifEmail;
 use App\Models\HistoryPesanan;
 use App\Models\Liga;
@@ -13,21 +12,23 @@ use App\Models\PesananDetails;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Wishlist;
-use Carbon\Carbon;
-use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpKernel\Profiler\Profile;
 use Illuminate\Support\Str;
 
 use function PHPUnit\Framework\isEmpty;
 
 class ApiController extends Controller
 {
+
+    // public function __construct() {
+    //     $this->middleware('auth:api', ['except' => ['login', 'register']]);
+    // }
+
     public function register(Request $request)
     {
         $validated = Validator::make($request->all(), [
@@ -47,14 +48,13 @@ class ApiController extends Controller
                 'error' => $validated->errors()
             ], 400);
         }
-        $random = Str::random(5);
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'verifikasiToken' => $random,
+            'verifikasiToken' => Str::random(5),
         ]);
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('auth-token')->plainTextToken;
         return response()->json([
             'message' => 'Success menambahkan Account !',
             'token' => $token
@@ -62,24 +62,37 @@ class ApiController extends Controller
     }
     public function sendEmail(Request $request)
     {
+        $validated = Validator::make($request->all(), [
+            'email' => 'required',
+            'id' => 'required'
+        ], [
+            'name.required' => 'Nama tidak boleh kosong',
+            'id.required' => 'id tidak boleh kosong',
+        ]);
+        if ($validated->fails()) {
+            return response()->json([
+                'message' => 'Gagal Kirim Ulang Email !',
+                'error' => $validated->errors()
+            ], 400);
+        }
         $body = [
             'name' => 'Raga',
             'body' => 'Testing'
         ];
-        Mail::to('putraraga959@gmail.com')->send(new VerifEmail($body));
         $random = Str::random(5);
+        Mail::to($request->email)->send(new VerifEmail($body));
         $user = User::where('id', $request->id)->first();
-        $user->verifikasitoken = $random;
+        $user->verifikasiToken = $random;
         $user->update();
         return response()->json([
-            'message' => "pesan",
+            'message' => "Email sudah di kirim",
             'token' => $user
         ]);
     }
     public function verificationEmail(Request $request)
     {
         $user = User::where('id', $request->id)->first();
-        $veriftoken = $user->verifikasitoken;
+        $veriftoken = $user->verifikasiToken;
         if ($request->confirmVerif != $veriftoken) {
             return response()->json([
                 'message' => 'token tidak match',
@@ -87,6 +100,7 @@ class ApiController extends Controller
             ]);
         } else {
             $user->email_verified_at = date('Y-m-d H:i:s');
+            $user->verifikasiToken = null;
             $user->update();
             return response()->json([
                 'message' => 'token match',
@@ -113,18 +127,20 @@ class ApiController extends Controller
                 'error' => $validated->errors()
             ], 400);
         }
+        $auth = Auth::attempt($request->only('email', 'password'));
+        if (!$auth) {
+            return response()->json([
+                'message' => 'Email dan Password tidak cocok',
+                'alert' => $auth
+            ], 401);
+        }
         $user = User::where('email', $request->email)->first();
+        $token = $user->createToken('auth-token')->plainTextToken;
         $email_verified = $user->email_verified_at;
         if (!empty($email_verified)) {
-            $auth = Auth::attempt($request->only('email', 'password'));
-            if (!$auth) {
-                return response()->json([
-                    'message' => 'Email dan Password tidak cocok',
-                    'alert' => $auth
-                ], 401);
-            }
             // $user = User::where('email', $request->email)->first();
-            $token = $user->createToken('token-auth')->plainTextToken;
+            $user->remember_token = $token;
+            $user->update();
             return response()->json([
                 'message' => 'Berhasil Login',
                 'access_token' => $token,
@@ -132,7 +148,7 @@ class ApiController extends Controller
             ]);
         } else {
             return response()->json([
-                'message' => 'Akun Anda belum terverifikasi !'
+                'message' => 'Akun Anda belum Terverifikasi !'
             ], 400);
         }
     }
@@ -141,32 +157,35 @@ class ApiController extends Controller
         $user = $request->user();
         $user->currentAccessToken()->delete();
         $token = $user->currentAccessToken();
-        if (empty($token)) {
-            return response()->json(
-                [
-                    'message' => 'Logout failed',
-                    'access' => $token
-                ]
-            );
-        } else {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Logout successfully',
-                'access' => $token
-            ], 200);
-        }
+        // auth()->user()->tokens()->delete();
+        return response()->json([
+            'message' => 'Logout',
+            'access' => $token
+        ]);
     }
-    public function getProfile($id)
+    public function getProfile(Request $request, $id)
     {
+        $user = $request->user();
+        // $token = $user->currentAccessToken()->show_source();
         $profile = User::where('id', $id)->first();
+        // auth()->user()->tokens()->delete();
+        // auth()->user()->token_name();
         if ($profile == null) {
             return response()->json([
-                'message' => 'Profile tidak ditemukan'
+                'message' => 'Profile tidak ditemukan',
+                'profile' => $profile
+            ]);
+        } else {
+            return response()->json([
+                // 'token' => $token,
+                'message' => 'Profile ditemukan',
+                'profile' => $profile
             ]);
         }
-        return response()->json([
-            'profile' => $profile
-        ]);
+        // return response()->json([
+            // 'token' => $token,
+            // 'profile' => $profile
+        // ]);
     }
     public function updateProfile(Request $request)
     {
@@ -292,7 +311,7 @@ class ApiController extends Controller
                 ]);
                 Wishlist::where('product_id', $product->id)->delete();
                 return response()->json([
-                    'message' => 'Berhasil hapus dari Wihslist'
+                    'message' => 'Berhasil hapus dari Wishlist'
                 ], 200);
                 // return response()->json([
                 //     'message' => 'Product ini sudah ada di Wishlist'
@@ -508,18 +527,17 @@ class ApiController extends Controller
                 'total_semua' => $pesanan_details
             ]);
         } else if ($request->methods == 'kurang') {
-            $info = PesananDetails::where('id', $request->id)->first();
             DB::table('pesanan_details')->where('id', $request->id)->update([
                 'jumlah_pesanan' => $pesanan_detail->jumlah_pesanan - 1,
                 'total_harga' => $pesanan_detail->total_harga - $product->harga
             ]);
+            $pesanan = Pesanan::where('user_id', $request->user_id)->where('status', 0)->first();
             $pesanan_details = PesananDetails::where('pesanan_id', $pesanan->id)->sum('total_harga');
             $pesanan->total_harga = $pesanan_details;
             $pesanan->update();
             $pesananDetail = PesananDetails::where('pesanan_id', $pesanan->id)->where('id', $request->id)->first();
             if ($pesananDetail->total_harga == 0) {
                 DB::delete('DELETE FROM pesanan_details WHERE id = ?', [$pesananDetail->id]);
-                DB::delete('DELETE FROM pesanans WHERE id = ?', [$pesanan->id]);
             }
             return response()->json([
                 'message' => 'Berhasil update pesanan',
@@ -618,3 +636,4 @@ class ApiController extends Controller
         ]);
     }
 }
+?>

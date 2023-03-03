@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\ApiController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,15 +19,16 @@ use Illuminate\Support\Facades\Route;
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
+
 Route::group(['prefix' => 'auth', 'middleware' => 'auth:sanctum'], function () {
     Route::post('/logout', [ApiController::class, 'logout']);
 });
+Route::get('/getProfile/{id}', [ApiController::class, 'getProfile']);
 
+Route::post('/login', [ApiController::class, 'login']);
 Route::post('/send-email', [ApiController::class, 'sendEmail']);
 Route::post('/verifikasiEmail', [ApiController::class, 'verificationEmail']);
 Route::post('/register', [ApiController::class, 'register']);
-Route::post('/login', [ApiController::class, 'login']);
-Route::get('/getProfile/{id}', [ApiController::class, 'getProfile']);
 Route::post('/updateProfile', [ApiController::class, 'updateProfile']);
 Route::get('/getProduct', [ApiController::class, 'getProduct']);
 Route::get('/bestProduct', [ApiController::class, 'bestProduct']);
@@ -48,3 +50,4 @@ Route::get('/searchWishlist/{user_id}/{nama_product}', [ApiController::class, 's
 Route::post('/addHistory', [ApiController::class, 'addHistory']);
 Route::get('/getPaymentChannels', [ApiController::class,'getPaymentChannels']);
 Route::post('/requestTranscation', [ApiController::class,'requestTranscation']);
+?>
